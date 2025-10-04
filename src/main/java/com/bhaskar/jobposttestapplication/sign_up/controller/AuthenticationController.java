@@ -25,8 +25,8 @@ public class AuthenticationController {
         return authenticationService.saveUserAuthentication(userData);
     }
 
-    @PostMapping("me")
-    public ResponseEntity<BaseModel> authenticatedUser(@RequestBody UserData userData) {
-        return authenticationService.aboutYou(userData);
+    @GetMapping("me")
+    public ResponseEntity<BaseModel> authenticatedUser() {
+        return authenticationService.aboutYou();
     }
 }

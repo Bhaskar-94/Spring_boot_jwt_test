@@ -91,12 +91,12 @@ public class AuthenticationService {
         }
     }
 
-    public ResponseEntity<BaseModel> aboutYou(UserData userData) {
+    public ResponseEntity<BaseModel> aboutYou() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         //String currentUser = authentication.getPrincipal().toString();
-        String jwtToken = jwtService.generateToken(userData);
+        String data = authentication.getName();
         BaseModel baseModel = new BaseModel();
-        baseModel.setData(jwtToken);
+        baseModel.setData(data);
         baseModel.setMessage("About you: ");
         return new ResponseEntity<>(baseModel, HttpStatus.OK);
     }
