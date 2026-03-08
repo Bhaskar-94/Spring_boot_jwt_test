@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class AuthenticationService {
@@ -34,20 +35,28 @@ public class AuthenticationService {
 
     public ResponseEntity<BaseModel> saveUserAuthentication(UserData userData) {
         try {
-            Optional<UserData> user = authenticationDao.findByEmail(userData.getEmail());
-            System.out.println("USER DATA: " + user);
-            if (user.isEmpty()) {
-                userData.setPassword(passwordEncoder.encode(userData.getPassword()));
-                authenticationDao.save(userData);
-                String jwtToken = jwtService.generateToken(userData);
-                BaseModel baseModel = new BaseModel();
-                baseModel.setData(jwtToken);
-                baseModel.setMessage("Success");
-                return new ResponseEntity<>(baseModel, HttpStatus.CREATED);
+            boolean isValidEmail = isEmailValid(userData.getEmail());
+            if (isValidEmail) {
+                Optional<UserData> user = authenticationDao.findByEmail(userData.getEmail());
+                System.out.println("USER DATA: " + user);
+                if (user.isEmpty()) {
+                    userData.setPassword(passwordEncoder.encode(userData.getPassword()));
+                    authenticationDao.save(userData);
+                    String jwtToken = jwtService.generateToken(userData);
+                    BaseModel baseModel = new BaseModel();
+                    baseModel.setData(jwtToken);
+                    baseModel.setMessage("Success");
+                    return new ResponseEntity<>(baseModel, HttpStatus.CREATED);
+                } else {
+                    BaseModel baseModel = new BaseModel();
+                    baseModel.setData(null);
+                    baseModel.setMessage("User has been already registered!");
+                    return new ResponseEntity<>(baseModel, HttpStatus.OK);
+                }
             } else {
                 BaseModel baseModel = new BaseModel();
                 baseModel.setData(null);
-                baseModel.setMessage("User has been already registered!");
+                baseModel.setMessage("Email is not valid");
                 return new ResponseEntity<>(baseModel, HttpStatus.OK);
             }
         } catch (Exception e) {
@@ -56,6 +65,16 @@ public class AuthenticationService {
             baseModel.setMessage(e.getLocalizedMessage());
             return new ResponseEntity<>(baseModel, HttpStatus.NOT_FOUND);
         }
+    }
+
+    private boolean isEmailValid(String email) {
+        // Regular expression to match valid email formats
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@" +
+                "(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        // Compile the regex
+        Pattern p = Pattern.compile(emailRegex);
+        // Check if email matches the pattern
+        return email != null && p.matcher(email).matches();
     }
 
     public ResponseEntity<BaseModel> fetchUserAuthenticationData(LoginUserDto loginUserDto) {
